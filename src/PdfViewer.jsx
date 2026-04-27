@@ -10,6 +10,8 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 const PdfPageItem = React.forwardRef(({ pageNumber, isNearby, pageWidth }, ref) => {
+    // Render at a high fixed resolution so zooming never causes a blank re-render
+    const dpr = Math.max(3, window.devicePixelRatio || 1);
     return (
         <div ref={ref} className="page bg-white shadow-xl flex items-center justify-center overflow-hidden border-r border-gray-200/50">
             <div className="w-full h-full flex justify-center items-center pointer-events-none bg-white">
@@ -17,6 +19,7 @@ const PdfPageItem = React.forwardRef(({ pageNumber, isNearby, pageWidth }, ref) 
                     <Page
                         pageNumber={pageNumber}
                         width={pageWidth}
+                        devicePixelRatio={dpr}
                         renderTextLayer={false}
                         renderAnnotationLayer={false}
                         loading={
