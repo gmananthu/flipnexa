@@ -44,6 +44,7 @@ const PdfViewer = ({ pdfUrl }) => {
     const [baseScale, setBaseScale] = useState(1);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showGridView, setShowGridView] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     
     const [isDragging, setIsDragging] = useState(false);
     const [dragStartX, setDragStartX] = useState(0);
@@ -64,11 +65,20 @@ const PdfViewer = ({ pdfUrl }) => {
             
             // Auto-scale to fit window
             const screenHeight = window.innerHeight;
+            const screenWidth = window.innerWidth;
+            const mobile = screenWidth < 768;
+            
             const targetHeight = screenHeight * 0.8;
-            let initialScale = targetHeight / viewport.height;
+            const targetWidth = screenWidth * 0.9;
+            const numPagesShown = mobile ? 1 : 2;
+            
+            const scaleForHeight = targetHeight / viewport.height;
+            const scaleForWidth = targetWidth / (viewport.width * numPagesShown);
+            
+            let initialScale = Math.min(scaleForHeight, scaleForWidth);
             
             // Limit minimum and maximum zoom
-            const fitScale = Math.min(1.5, Math.max(0.4, initialScale));
+            const fitScale = Math.min(1.5, Math.max(0.2, initialScale));
             setScale(fitScale);
             setBaseScale(fitScale);
         });
@@ -160,6 +170,12 @@ const PdfViewer = ({ pdfUrl }) => {
             document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
             document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
         };
+    }, []);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     // Panning / Dragging Logic
@@ -340,7 +356,7 @@ const PdfViewer = ({ pdfUrl }) => {
                                         maxShadowOpacity={0.5}
                                         showCover={true}
                                         autoCenter={true} // Horizontally centers the book!
-                                        usePortrait={false} // Force 2-page view always
+                                        usePortrait={isMobile} // Show 1 page on mobile, 2 on desktop
                                         useMouseEvents={scale <= baseScale + 0.01} // Disable flip on click/drag when zoomed
                                         mobileScrollSupport={true}
                                         onFlip={onPage}
