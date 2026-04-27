@@ -38,6 +38,41 @@ const PdfPageItem = React.forwardRef(({ pageNumber, isNearby, pageWidth }, ref) 
     );
 });
 
+const LazyGridPage = ({ pageNum }) => {
+    const [isVisible, setIsVisible] = useState(false);
+    const ref = useRef();
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsVisible(true);
+                    observer.disconnect();
+                }
+            },
+            { rootMargin: '300px' } // Load slightly before it comes into view
+        );
+        if (ref.current) observer.observe(ref.current);
+        return () => observer.disconnect();
+    }, []);
+
+    return (
+        <div ref={ref} className="h-full w-full flex items-center justify-center min-h-[160px]">
+            {isVisible ? (
+                <Page
+                    pageNumber={pageNum}
+                    width={120}
+                    renderTextLayer={false}
+                    renderAnnotationLayer={false}
+                    loading={<div className="h-6 w-6 border-2 border-t-blue-500 rounded-full animate-spin"></div>}
+                />
+            ) : (
+                <div className="h-6 w-6 border-2 border-t-blue-500 rounded-full animate-spin"></div>
+            )}
+        </div>
+    );
+};
+
 const PdfViewer = ({ pdfUrl }) => {
     const navigate = useNavigate();
     const [numPages, setNumPages] = useState(null);
@@ -257,6 +292,8 @@ const PdfViewer = ({ pdfUrl }) => {
             const timer = setTimeout(() => {
                 if (bookRef.current && bookRef.current.pageFlip()) {
                     bookRef.current.pageFlip().turnToPage(pendingPage);
+                    // Force state update. turnToPage doesn't reliably trigger onFlip immediately on mount
+                    setCurrentPage(pendingPage);
                 }
             }, 100);
             setPendingPage(null);
@@ -280,28 +317,22 @@ const PdfViewer = ({ pdfUrl }) => {
                             </svg>
                         </button>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        {Array.from({ length: numPages || 0 }, (_, i) => i + 1).map((pageNum) => (
-                            <div
-                                key={`grid-${pageNum}`}
-                                className="cursor-pointer transition-all transform hover:scale-105 bg-white shadow rounded-lg overflow-hidden flex flex-col"
-                                onClick={() => handleGridItemClick(pageNum)}
-                            >
-                                <div className="aspect-[0.7] flex items-center justify-center bg-gray-100 p-2">
-                                     <Document file={pdfUrl} loading={null}>
-                                         <Page
-                                             pageNumber={pageNum}
-                                             width={120}
-                                             renderTextLayer={false}
-                                             renderAnnotationLayer={false}
-                                             loading={<div className="h-4 w-4 border-2 border-t-blue-500 rounded-full animate-spin"></div>}
-                                         />
-                                     </Document>
+                    <Document file={pdfUrl} loading={<div className="text-white text-center py-8">Loading Document...</div>}>
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            {Array.from({ length: numPages || 0 }, (_, i) => i + 1).map((pageNum) => (
+                                <div
+                                    key={`grid-${pageNum}`}
+                                    className="cursor-pointer transition-all transform hover:scale-105 bg-white shadow rounded-lg overflow-hidden flex flex-col"
+                                    onClick={() => handleGridItemClick(pageNum)}
+                                >
+                                    <div className="aspect-[0.7] flex items-center justify-center bg-gray-100 p-2">
+                                         <LazyGridPage pageNum={pageNum} />
+                                    </div>
+                                    <div className="p-2 text-center text-sm text-gray-800 font-medium border-t">{pageNum}</div>
                                 </div>
-                                <div className="p-2 text-center text-sm text-gray-800 font-medium border-t">{pageNum}</div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    </Document>
                 </div>
             ) : (
                 // Book View
@@ -368,6 +399,7 @@ const PdfViewer = ({ pdfUrl }) => {
                                         width={pageDimensions.width}
                                         height={pageDimensions.height}
                                         size="fixed"
+                                        startPage={currentPage}
                                         minWidth={315}
                                         maxWidth={1500}
                                         minHeight={400}
