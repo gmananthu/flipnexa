@@ -41,6 +41,7 @@ const PdfViewer = ({ pdfUrl }) => {
     const [pageDimensions, setPageDimensions] = useState(null);
     const [currentPage, setCurrentPage] = useState(0); 
     const [scale, setScale] = useState(1);
+    const [baseScale, setBaseScale] = useState(1);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showGridView, setShowGridView] = useState(false);
     
@@ -67,7 +68,9 @@ const PdfViewer = ({ pdfUrl }) => {
             let initialScale = targetHeight / viewport.height;
             
             // Limit minimum and maximum zoom
-            setScale(Math.min(1.5, Math.max(0.4, initialScale)));
+            const fitScale = Math.min(1.5, Math.max(0.4, initialScale));
+            setScale(fitScale);
+            setBaseScale(fitScale);
         });
     };
 
@@ -90,7 +93,16 @@ const PdfViewer = ({ pdfUrl }) => {
     };
 
     const zoomIn = () => setScale((prev) => Math.min(3.0, prev * 1.2));
-    const zoomOut = () => setScale((prev) => Math.max(0.3, prev / 1.2));
+    const zoomOut = () => {
+        setScale((prev) => {
+            const newScale = Math.max(0.3, prev / 1.2);
+            if (newScale <= baseScale + 0.01) {
+                setTranslateX(0);
+                setTranslateY(0);
+            }
+            return newScale;
+        });
+    };
 
     const toggleFullscreen = () => {
         if (!isFullscreen) {
@@ -153,23 +165,36 @@ const PdfViewer = ({ pdfUrl }) => {
     // Panning / Dragging Logic
     const startDrag = (e) => {
         // Only allow dragging if we are significantly zoomed in
-        if (scale > 0.8) {
+        if (scale > baseScale + 0.01) {
+            e.preventDefault(); // Prevent native text/image drag glitches
             setIsDragging(true);
             setDragStartX(e.clientX - translateX);
             setDragStartY(e.clientY - translateY);
         }
     };
 
-    const onDrag = (e) => {
-        if (isDragging && scale > 0.8) {
-            setTranslateX(e.clientX - dragStartX);
-            setTranslateY(e.clientY - dragStartY);
-        }
-    };
+    useEffect(() => {
+        if (!isDragging) return;
 
-    const endDrag = () => {
-        setIsDragging(false);
-    };
+        const handleMouseMove = (e) => {
+            if (scale > baseScale + 0.01) {
+                setTranslateX(e.clientX - dragStartX);
+                setTranslateY(e.clientY - dragStartY);
+            }
+        };
+
+        const handleMouseUp = () => {
+            setIsDragging(false);
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDragging, dragStartX, dragStartY, scale, baseScale]);
 
     useEffect(() => {
         // When page changes, reset position slightly or completely if needed
@@ -177,23 +202,23 @@ const PdfViewer = ({ pdfUrl }) => {
     }, [currentPage]);
 
     useEffect(() => {
-        const handleMouseUp = () => {
-            if (isDragging) endDrag();
-        };
-        window.addEventListener('mouseup', handleMouseUp);
-        return () => window.removeEventListener('mouseup', handleMouseUp);
-    }, [isDragging]);
+        const container = containerRef.current;
+        if (!container) return;
 
-    const handleWheel = (e) => {
-        if (e.ctrlKey) {
-            e.preventDefault();
-            if (e.deltaY < 0) {
-                zoomIn();
-            } else {
-                zoomOut();
+        const handleNativeWheel = (e) => {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    zoomIn();
+                } else {
+                    zoomOut();
+                }
             }
-        }
-    };
+        };
+
+        container.addEventListener('wheel', handleNativeWheel, { passive: false });
+        return () => container.removeEventListener('wheel', handleNativeWheel);
+    }, [baseScale]); // Re-bind when baseScale is set so zoomOut uses the correct value
 
     const toggleGridView = () => setShowGridView(!showGridView);
     
@@ -248,7 +273,6 @@ const PdfViewer = ({ pdfUrl }) => {
                 <>
                     <div 
                         className="flex-grow overflow-hidden relative flex items-center justify-center"
-                        onWheel={handleWheel}
                     >
                         {/* Top Back Button */}
                         <button
@@ -287,13 +311,13 @@ const PdfViewer = ({ pdfUrl }) => {
                             ref={pageWrapperRef}
                             style={{
                                 transform: `translate(${translateX}px, ${translateY}px) scale(${scale})`,
-                                cursor: scale > 0.8 ? (isDragging ? 'grabbing' : 'grab') : 'default'
+                                cursor: scale > baseScale + 0.01 ? (isDragging ? 'grabbing' : 'grab') : 'default'
                             }}
                             onMouseDown={startDrag}
-                            onMouseMove={onDrag}
-                            onMouseUp={endDrag}
-                            onMouseLeave={endDrag}
                         >
+                            {scale > baseScale + 0.01 && (
+                                <div className="absolute inset-0 z-40" />
+                            )}
                             <Document
                                 file={pdfUrl}
                                 onLoadSuccess={onDocumentLoadSuccess}
@@ -317,6 +341,7 @@ const PdfViewer = ({ pdfUrl }) => {
                                         showCover={true}
                                         autoCenter={true} // Horizontally centers the book!
                                         usePortrait={false} // Force 2-page view always
+                                        useMouseEvents={scale <= baseScale + 0.01} // Disable flip on click/drag when zoomed
                                         mobileScrollSupport={true}
                                         onFlip={onPage}
                                         className="flipbook-demo shadow-2xl"
