@@ -48,6 +48,7 @@ const PdfViewer = ({ pdfUrl }) => {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showGridView, setShowGridView] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [pendingPage, setPendingPage] = useState(null);
     
     const [isDragging, setIsDragging] = useState(false);
     const [dragStartX, setDragStartX] = useState(0);
@@ -242,11 +243,26 @@ const PdfViewer = ({ pdfUrl }) => {
     const toggleGridView = () => setShowGridView(!showGridView);
     
     const handleGridItemClick = (pageNum) => {
-        if (bookRef.current) {
-            bookRef.current.pageFlip().turnToPage(pageNum - 1);
-        }
+        const targetPageIndex = pageNum - 1;
+        // Instantly update current page so that `isNearby` becomes true 
+        // for the target page, forcing the PDF to mount.
+        setCurrentPage(targetPageIndex);
+        setPendingPage(targetPageIndex); // Save the target page for when flipbook remounts
         setShowGridView(false);
     };
+
+    useEffect(() => {
+        if (!showGridView && pendingPage !== null) {
+            // Wait a tiny bit for HTMLFlipBook to fully remount and initialize
+            const timer = setTimeout(() => {
+                if (bookRef.current && bookRef.current.pageFlip()) {
+                    bookRef.current.pageFlip().turnToPage(pendingPage);
+                }
+            }, 100);
+            setPendingPage(null);
+            return () => clearTimeout(timer);
+        }
+    }, [showGridView, pendingPage]);
 
     return (
         <div
