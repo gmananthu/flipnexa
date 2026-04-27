@@ -296,9 +296,9 @@ const PdfViewer = ({ pdfUrl }) => {
                         {/* Top Back Button */}
                         <button
                             onClick={() => navigate(-1)}
-                            className="absolute left-4 top-4 p-2 rounded-full bg-black/50 hover:bg-black/80 z-20 transition shadow-lg"
+                            className="absolute left-2 top-2 md:left-4 md:top-4 p-2 md:p-3 rounded-full bg-black/50 hover:bg-black/80 z-20 transition shadow-lg"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
                         </button>
@@ -307,20 +307,20 @@ const PdfViewer = ({ pdfUrl }) => {
                         <button
                             onClick={goToPrevPage}
                             disabled={currentPage === 0}
-                            className={`absolute left-4 top-1/2 -translate-y-1/2 z-20 p-4 rounded-full bg-black/50 transition shadow-lg ${currentPage === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-black/80 hover:scale-110'}`}
+                            className={`absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-20 p-2 transition-all duration-200 ${currentPage === 0 ? 'opacity-0 pointer-events-none' : 'opacity-60 hover:opacity-100 hover:-translate-x-1'}`}
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 md:h-16 md:w-16 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
 
                         <button
                             onClick={goToNextPage}
                             disabled={numPages && currentPage >= numPages - 1}
-                            className={`absolute right-4 top-1/2 -translate-y-1/2 z-20 p-4 rounded-full bg-black/50 transition shadow-lg ${numPages && currentPage >= numPages - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-black/80 hover:scale-110'}`}
+                            className={`absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-20 p-2 transition-all duration-200 ${numPages && currentPage >= numPages - 1 ? 'opacity-0 pointer-events-none' : 'opacity-60 hover:opacity-100 hover:translate-x-1'}`}
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 md:h-16 md:w-16 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
                             </svg>
                         </button>
 
@@ -385,27 +385,27 @@ const PdfViewer = ({ pdfUrl }) => {
                     </div>
 
                     {/* Bottom Control Bar */}
-                    <div className="bottom-controls bg-black/90 p-3 flex items-center justify-between border-t border-gray-800 sticky bottom-0 z-30">
+                    <div className="bottom-controls bg-black/90 p-2 md:p-3 flex items-center justify-between border-t border-gray-800 sticky bottom-0 z-30">
                         {/* Page Numbers */}
-                        <div className="flex items-center space-x-2 text-sm font-medium w-32 text-gray-300">
+                        <div className="flex items-center space-x-2 text-xs md:text-sm font-medium w-20 md:w-32 text-gray-300">
                             <span>{numPages ? `${Math.max(1, currentPage)}-${Math.min(currentPage + 1, numPages)} of ${numPages}` : ''}</span>
                         </div>
 
                         {/* Center Controls */}
-                        <div className="flex-grow flex justify-center items-center px-4">
-                            <div className="w-full max-w-sm items-center space-x-4 flex">
-                                <button onClick={zoomOut} className="p-2 rounded-full hover:bg-gray-700 transition" title="Zoom Out">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                        <div className="flex-grow flex justify-center items-center px-2 md:px-4">
+                            <div className="w-full max-w-sm items-center space-x-2 md:space-x-4 flex">
+                                <button onClick={zoomOut} className="p-1.5 md:p-2 rounded-full hover:bg-gray-700 transition" title="Zoom Out">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M5 11a1 1 0 011-1h12a1 1 0 110 2H6a1 1 0 01-1-1z" />
                                     </svg>
                                 </button>
                                 
-                                <div className="flex-grow text-center text-sm font-semibold tracking-wider text-gray-400">
+                                <div className="flex-grow text-center text-xs md:text-sm font-semibold tracking-wider text-gray-400">
                                     {Math.round(scale * 100)}%
                                 </div>
 
-                                <button onClick={zoomIn} className="p-2 rounded-full hover:bg-gray-700 transition" title="Zoom In">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                <button onClick={zoomIn} className="p-1.5 md:p-2 rounded-full hover:bg-gray-700 transition" title="Zoom In">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M12 4a1 1 0 011 1v6h6a1 1 0 110 2h-6v6a1 1 0 11-2 0v-6H5a1 1 0 110-2h6V5a1 1 0 011-1z" />
                                     </svg>
                                 </button>
@@ -413,9 +413,9 @@ const PdfViewer = ({ pdfUrl }) => {
                         </div>
 
                         {/* Right Controls */}
-                        <div className="flex items-center space-x-2 w-32 justify-end">
-                            <button onClick={toggleGridView} className="p-2 rounded-full hover:bg-gray-700 transition" title="Grid View">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <div className="flex items-center space-x-1 md:space-x-2 w-20 md:w-32 justify-end">
+                            <button onClick={toggleGridView} className="p-1.5 md:p-2 rounded-full hover:bg-gray-700 transition" title="Grid View">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                                 </svg>
                             </button>
