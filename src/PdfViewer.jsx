@@ -95,31 +95,33 @@ const PdfViewer = ({ pdfUrl }) => {
     const containerRef = useRef(null);
     const pageWrapperRef = useRef(null);
 
+    const calculateScale = (viewport) => {
+        const screenHeight = window.innerHeight;
+        const screenWidth = window.innerWidth;
+        const mobile = screenWidth < 768;
+        
+        const targetHeight = screenHeight * 0.8;
+        const targetWidth = screenWidth * 0.9;
+        const numPagesShown = mobile ? 1 : 2;
+        
+        const scaleForHeight = targetHeight / viewport.height;
+        const scaleForWidth = targetWidth / (viewport.width * numPagesShown);
+        
+        let initialScale = Math.min(scaleForHeight, scaleForWidth);
+        
+        // Limit minimum and maximum zoom
+        const fitScale = Math.min(1.5, Math.max(0.2, initialScale));
+        setScale(fitScale);
+        setBaseScale(fitScale);
+    };
+
     const onDocumentLoadSuccess = (pdf) => {
         setNumPages(pdf.numPages);
         // Get natural dimensions from the first page
         pdf.getPage(1).then(page => {
             const viewport = page.getViewport({ scale: 1 });
             setPageDimensions({ width: viewport.width, height: viewport.height });
-            
-            // Auto-scale to fit window
-            const screenHeight = window.innerHeight;
-            const screenWidth = window.innerWidth;
-            const mobile = screenWidth < 768;
-            
-            const targetHeight = screenHeight * 0.8;
-            const targetWidth = screenWidth * 0.9;
-            const numPagesShown = mobile ? 1 : 2;
-            
-            const scaleForHeight = targetHeight / viewport.height;
-            const scaleForWidth = targetWidth / (viewport.width * numPagesShown);
-            
-            let initialScale = Math.min(scaleForHeight, scaleForWidth);
-            
-            // Limit minimum and maximum zoom
-            const fitScale = Math.min(1.5, Math.max(0.2, initialScale));
-            setScale(fitScale);
-            setBaseScale(fitScale);
+            calculateScale(viewport);
         });
     };
 
@@ -212,10 +214,18 @@ const PdfViewer = ({ pdfUrl }) => {
     }, []);
 
     useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+            if (pageDimensions) {
+                calculateScale(pageDimensions);
+                // Also reset translate to keep it centered when resizing
+                setTranslateX(0);
+                setTranslateY(0);
+            }
+        };
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    }, [pageDimensions]);
 
     // Panning / Dragging Logic
     const startDrag = (e) => {
@@ -396,6 +406,7 @@ const PdfViewer = ({ pdfUrl }) => {
                             >
                                 {numPages && pageDimensions && (
                                     <HTMLFlipBook
+                                        key={isMobile ? 'mobile' : 'desktop'}
                                         width={pageDimensions.width}
                                         height={pageDimensions.height}
                                         size="fixed"
