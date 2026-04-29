@@ -311,6 +311,16 @@ const PdfViewer = ({ pdfUrl }) => {
         }
     }, [showGridView, pendingPage]);
 
+    // Restore the current page after a layout remount (e.g., crossing desktop/mobile boundary)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (!showGridView && bookRef.current && bookRef.current.pageFlip()) {
+                bookRef.current.pageFlip().turnToPage(currentPage);
+            }
+        }, 100);
+        return () => clearTimeout(timer);
+    }, [isMobile]);
+
     return (
         <div
             ref={containerRef}
@@ -410,7 +420,6 @@ const PdfViewer = ({ pdfUrl }) => {
                                         width={pageDimensions.width}
                                         height={pageDimensions.height}
                                         size="fixed"
-                                        startPage={currentPage}
                                         minWidth={315}
                                         maxWidth={1500}
                                         minHeight={400}
